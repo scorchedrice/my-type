@@ -1,0 +1,15 @@
+{
+  "name": "codes",
+  "version": "1.0.0",
+  "main": "bigint.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}
