@@ -99,3 +99,65 @@ const func: () => void = () => 3;
 //
 // const infFunc2 = () => { while(true) console.log('infinite') };
 // const result4 : never = infFunc2();
+
+
+type TestType = number; // 닉네임
+
+// 조합
+type TestUser = {
+    name: string;
+    age: number;
+}
+
+function testFunction({ name, age } : TestUser) : TestType {
+    console.log(`my name is ${name} and age is ${age}`);
+    return age;
+}
+
+type Base = {
+    name: string;
+    age: number;
+    hobby: string[];
+    language: string[];
+}
+
+type BasicInfo = Pick<Base, 'name'|'age'>
+
+namespace Test {
+    export interface InnerInterface {
+        test : string;
+    }
+
+    export type InnerType = { test2 : string }
+}
+
+// const ex1 : Test.InnerInterface = {
+//     test: 'hi'
+// }
+//
+// const ex2 : Test.InnerType = { test2 : 'bye' }
+//
+// namespace MyConst {
+//     export const a = 10;
+// }
+//
+// console.log(MyConst.a)
+
+namespace A1 {
+    export interface B {
+        test: string
+    }
+}
+
+namespace A1 {
+    export interface B {
+        test1: string
+    }
+}
+
+const Test : A1.B = {
+    test: '1',
+    test1: '2'
+}
+
+console.log(Test)
