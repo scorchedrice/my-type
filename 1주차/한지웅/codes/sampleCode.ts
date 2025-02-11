@@ -143,21 +143,96 @@ namespace Test {
 //
 // console.log(MyConst.a)
 
-namespace A1 {
-    export interface B {
-        test: string
-    }
-}
+// namespace A1 {
+//     export interface B {
+//         test: string
+//     }
+// }
+//
+// namespace A1 {
+//     export interface B {
+//         test1: string
+//     }
+// }
+//
+// const Test : A1.B = {
+//     test: '1',
+//     test1: '2'
+// }
+//
+// console.log(Test)
 
-namespace A1 {
-    export interface B {
-        test1: string
-    }
-}
+// type Sample = {
+//     normal : string;
+//     optional? : string;
+//     readonly onlyRead: string;
+// }
+//
+// const sample : Sample = {
+//     normal: 'normal',
+//     onlyRead: 'onlyRead',
+// }
+//
+// console.log(sample.optional) // undefined
+// sample.onlyRead = 'change!'
 
-const Test : A1.B = {
-    test: '1',
-    test1: '2'
-}
+// interface Money {
+//     amount: number;
+//     unit: string;
+// }
+//
+// // const moneyErrorTest : Money = {amount: 200, unit: 'won', year: 1998} // year은 Money 타입에 존재하지 않는다는 에러
+// const objectVariableMoney = {amount: 200, unit: 'won', year: 2024};
+// const moneyErrorTest : Money = objectVariableMoney; // 에러가 발생하지 않음.
+//
+// function addMoney(money1: Money, money2: Money) : Money {
+//     return {
+//         amount: money1.amount + money2.amount,
+//         unit: 'won'
+//     }
+// }
+//
+// // addMoney(objectVariableMoney, {amount: 200, unit: 'won', year: 1998}) // year은 Money 타입에 존재하지 않는다는 에러
+// addMoney(objectVariableMoney, objectVariableMoney) // 에러가 발생하지 않음.
 
-console.log(Test)
+// const {props: {nested : string}} = {props: {nested : 'hi'}}
+// // console.log(nested) // 찾을 수 없음.
+// console.log(string) // hi, nested에 string이란 변수 이름을 대입한 것
+// const { props : {nested} } : { props : {nested : string}} = { props : {nested : 'hello'}};
+// console.log(nested)
+//
+// type rest1 = string
+// type rest2 = {
+//     a: string;
+//     b: number;
+// }
+//
+// const { props: {rest1, ...rest2}} = {props: {rest1: 'hello', a: 'a', b: 1}}
+
+// const obj = {
+//     a : '난a',
+//     b: '난b',
+//     c: 1,
+// };
+//
+// type Keys = keyof typeof obj; // "a"|"b"|"c"
+// type Values = typeof obj[Keys] // string|number
+//
+// type arrKeys = keyof [1,2,3]; // "length"|"toString"| ... |"0"|"1"|"2"
+// type arr = [1,2,3]
+// type arrLength = arr['length']; // 3
+// let testArr : arrKeys;
+// testArr = 5; // 모든 number은 배열의 key로 허용된다.
+// // testArr = "3"; // 인덱스 밖의 범위로 제한
+
+type A = {
+    name: string
+    age: number;
+}
+type UNION = "hi"|"hello";
+type B = A['name']; // 인덱스 접근 타입
+type C = Pick<A, 'name'>; // Pick
+type D = {
+    [key in UNION] : string;
+} // 매핑된 객체 타입 ... { hi : string; hello : string}
+
