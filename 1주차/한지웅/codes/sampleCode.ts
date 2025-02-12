@@ -249,10 +249,13 @@ namespace Test {
 interface A {
     name: string;
     age: number;
+    hobby: string[];
+    language: string[];
 }
 
 interface B extends A {
     name: 'james';
-}
+} // name만 바꾸고 A와 형식 동일
 
-const test : B = { name: 'jame', age: 5 }
+type IndexType = A['name']; // string
+type PickType = Pick<A, 'name'|'age'>;
