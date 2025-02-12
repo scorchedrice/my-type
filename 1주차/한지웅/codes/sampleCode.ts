@@ -225,14 +225,34 @@ namespace Test {
 // testArr = 5; // 모든 number은 배열의 key로 허용된다.
 // // testArr = "3"; // 인덱스 밖의 범위로 제한
 
-type A = {
-    name: string
+// type A = {
+//     name: string
+//     age: number;
+// }
+// type UNION = "hi"|"hello";
+// type B = A['name']; // 인덱스 접근 타입
+// type C = Pick<A, 'name'>; // Pick
+// type D = {
+//     [key in UNION] : string;
+// } // 매핑된 객체 타입 ... { hi : string; hello : string}
+
+// const weight : number & {__brand: 'lb'} = 60 as number & {__brand: 'lb'}
+// const length : number & {__brand: 'km'} = 60 as number & {__brand: 'cm'}
+//
+// function showWeight(weight: number & {__brand: 'lb'}) {
+//     console.log(`Weight : ${weight}`)
+// }
+//
+// showWeight(weight)
+// showWeight(length)
+
+interface A {
+    name: string;
     age: number;
 }
-type UNION = "hi"|"hello";
-type B = A['name']; // 인덱스 접근 타입
-type C = Pick<A, 'name'>; // Pick
-type D = {
-    [key in UNION] : string;
-} // 매핑된 객체 타입 ... { hi : string; hello : string}
 
+interface B extends A {
+    name: 'james';
+}
+
+const test : B = { name: 'jame', age: 5 }
