@@ -1,0 +1,567 @@
+## 2.13 객체 간에 대입할 수 있는지 확인하는 법을 배우자
+
+- 변수를 대입할 떄는 객체 간에 대입할 수 있는지 여부를 따져봐야 함
+```ts
+interface A {
+  name: string;
+}
+interface B {
+  name: string;
+  age: number;
+}
+
+const aObj = {
+  name: 'zero',
+}
+const bObj = {
+  name: 'nero',
+  age: 32,
+}
+const aToA: A = aObj;
+const bToA: A = bObj;
+const aToB: B = aObj;
+// Property 'age' is missing in type '{ name: string; }' but required in type 'B'.
+const bTob: B = bObj;
+```
+#### 객체에도 좁은 타입은 넓은 타입으로 대입할 수 있지만, 넓은 타입은 좁은 타입에 대입할 수 없음
+
+> 좁은 타입 : 구체적인 타입
+넓은 타입 : 추상적인 타입
+
+
+- `{ name: string } | { age: number }`는 `{ name: string, age: number }` 또는 `{ name: string }` 또는 `{ age: number }`에 대입할 수 없음 (합집합은 각각의 집합이나 교집합보다 넓음)
+
+#### 튜플은 배열보다 좁은 타입
+
+- 튜플은 배열에 대입할 수 있으나 배열은 튜플에 대입할 수 없음
+
+- 배열이나 튜플에 `readonly` 수식어를 붙일 수 있음 → `readonly` 수식어가 붙은 배열이 더 넓은 타입
+```ts
+let a: readonly string[] = ['hi', 'readonly'];
+let b: string[] = ['hi', 'normal'];
+
+a = b;
+b = a;  // 에러 발생
+```
+- 배열을 튜플에 대입 불가
+
+- 튜플을 `readonly` 수식어가 붙은 배열에 대입 불가
+
+#### 속성이 동일한 두 객체가 있을 때 속성이 옵셔널인 객체가 더 넓은 타입
+
+- 옵셔널이란 기존 타입에 `undefined`가 유니언된 것과 같음 
+
+- `기존 타입 | undefined`가 기존 타입보다 넓으므로 더 넓은 타입이 됨
+
+#### 객체에서는 속성에 readonly가 붙어도 서로 대입 가능
+
+### 구조적 타이핑
+
+- 타입스크립트에서는 모든 속성이 동일하면 객체 타입의 이름이 다르더라도 동일한 타입으로 취급함
+
+- **구조적 타이핑** : 객체를 어떻게 만들었든 구조가 같으면 같은 객체로 인식하는 것
+```js
+interface A {
+  name: string;
+}
+interface B {
+  name: string;
+  age: number;
+}
+
+const aObj = {
+  name: 'zero',
+}
+const bObj = {
+  name: 'nero',
+  age: 32,
+}
+const aToA: A = aObj;
+const bToA: A = bObj;
+const aToB: B = aObj;  // error
+const bTob: B = bObj;
+```
+- `B`는 구조적 관점에서 `A`라고 볼 수 있지만 `A`는 `B`라고 볼 수 없음
+
+- 이처럼 완전히 구조가 같아야만 동일한 것도 아니고, `B`가 `A`라고 `A`가 `B`인 것도 아님
+
+#### 배열에 매핑된 객체 타입이 적용된 경우
+```js
+type Arr = number[];
+type CopyArr = {
+  [Key in keyof Arr]: Arr[Key];
+}
+
+const copyArr: CopyArr = [1, 3, 9];
+```
+- CopyArr은 객체 타입인데도 숫자 배열과 모든 속성이 같으므로 구조적으로 동일한 셈
+
+#### 구조적으로 동일하지 않게 만들기
+
+- 구조적으로 동일하지 않게 하려면 객체를 구별할 수 있는 속성을 하나 추가하면 됨
+
+```js
+interface Money {
+  __type: 'money';
+  amount: number;
+  unit: string;
+}
+
+interface Liter {
+  __type: 'liter';
+  amount: number;
+  unit: string;
+}
+```
+- **브랜드(brand) 속성** : `__type` 같은 속성 (속성 이름은 바뀌어도 됨)
+
+- **브랜딩(branding)** : 브랜드 속성을 사용하는 것
+
+---
+
+## 2.14 제네릭으로 타입을 함수처럼 사용하자
+
+- 자바스크립트에서 함수로 중복을 제거하듯이, 타입스크립트에선 **제네릭(generic)**을 이용해 중복을 제거할 수 있음
+
+- 제네릭 표기는 `<타입 매개변수>`로 하며 인터페이스 바로 뒤에 위치함
+```ts
+interface Person<N, A> {
+  type: 'human',
+  race: 'yellow',
+  name: N,
+  age: A,  
+}
+interface Zero extends Person<'zero', 28> {}
+interface Nero extends Person<'nero', 32> {}
+```
+- 선언한 제네릭을 사용할 때는 `Person <'zero', 28>` 같이 매개변수에 대응하는 **실제 타입 인수**를 넣으면 됨 (함수의 매개변수에 호출될 때 넣은 인수가 대응되는 것과 유사함)
+
+#### Array도 제네릭 타입이기 때문에 <> 부분이 있음
+
+```ts
+interface Array<T> {
+  [key: number]: T,
+  length: number,
+  //기타 속성들
+}
+```
+
+#### 타입 매개변수의 개수와 타입 인수의 개수가 일치하지 않으면 에러 발생
+
+```ts
+interface Zero extends Person<'zero'> {}  // error
+interface Zero extends Person<'zero', 28> {}
+interface Zero extends Person<'zero', 28, boolean> {}  // error
+```
+#### 클래스와 타입 별칭, 함수도 제네릭을 가질 수 있음
+```ts
+type Person<N, A> = {
+  type: 'human',
+  race: 'yellow',
+  name: N,
+  age: A,  
+}
+type Zero = Person<'zero', 28>;
+type Nero = Person<'nero', 32>;
+```
+```ts
+class Person<N, A> {
+  name: N;
+  age: A;
+  constructor(name: N, age: A) {
+    this.name = name;
+    this.age = age;
+  }
+}
+```
+#### 함수에서는 함수 선언문이냐 표현식이냐에 따라 제네릭 표기 위치가 다르므로 주의
+```ts
+const personFactoryE = <N, A>(name: N, age: A) => ({
+  type: 'human',
+  race: 'yellow',
+  name,
+  age,
+});
+
+function personFactoryD<N, A>(name: N, age: A) {
+  return ({
+    type: 'human',
+    race: 'yellow',
+    name,
+    age,
+  })
+};
+```
+#### interface와 type간에 교차사용도 가능
+```ts
+interface IPerson<N, A> {
+  type: 'human',
+  race: 'yellow',
+  name: N,
+  age: A,  
+}
+type TPerson<N, A> = {
+  type: 'human',
+  race: 'yellow',
+  name: N,
+  age: A,  
+}
+type Zero = IPerson<'zero', 28>;
+interface Nero extends TPerson<'nero', 32> {}
+```
+#### 제네릭 위치 정리
+> - interface 이름<타입 매개변수들> {...}
+-  type 이름<타입 매개변수들> = {...}
+- class 이름<타입 매개변수들> {...}
+- function 이름<타입 매개변수들>(...) {...}
+- const 함수이름 = <타입 매개변수들>(...) => {...}
+
+#### 객체나 클래스의 메서드에 따로 제네릭을 표기할 수 있음
+```ts
+class Person<N, A> {
+  name: N;
+  age: A;
+  constructor(name: N, age: A) {
+    this.name = name;
+    this.age = age;
+  }
+  method<B>(param: B) {}
+}
+
+interface IPerson<N, A> {
+  type: 'human',
+  race: 'yellow',
+  name: N,
+  age: A,  
+  method: <B>(param: B) => void;
+}
+```
+#### 타입 매개변수에는 기본값(default)을 사용할 수 있음
+```ts
+interface Person<N = string, A = number> {
+  type: 'human',
+  race: 'yellow',
+  name: N,
+  age: A,  
+}
+type Person1 = Person;
+// type Person1 = Person<string, number>
+type Person2 = Person<number>;
+// type Person2 = Person<number, number>
+type Person3 = Person<number, boolean>;
+// type Person3 = Person<number, boolean>
+```
+- 타입 인수로 N과 A 자리에 타입을 제공하지 않으면 각각의 타입 매개변수ㅡㄴㄴ 기본값 타입이 됨
+
+#### 타입스크립트에는 제네릭에 직접 타입을 넣지 않아도 추론을 통해 타입을 알아낼 수 있음
+
+```ts
+interface Person<N, A> {
+  type: 'human',
+  race: 'yellow',
+  name: N,
+  age: A,  
+}
+
+const personFactoryE = <N, A = unknown>(name: N, age: A): Person<N, A> => ({
+  type: 'human',
+  race: 'yellow',
+  name,
+  age,
+});
+
+const zero = personFactoryE('zero', 28);
+// const zero: Person<string, number>
+```
+- 타입스크립트가 추론을 통해 타입을 알아낼 수 있는 경우 직접 <>에 타입을 넣지 않아도 됨
+
+#### 상수 타입 매개변수
+
+```ts
+function values<const T>(initial: T[]) {
+  return {
+    hasValue(value: T) { return initial.includes(value) },
+  };
+}
+
+const savedValues = values(["a", "b", "c"]);
+savedValues.hasValue("x");
+// Argument of type '"x"' is not assignable to parameter of type '"a" | "b" | "c"'.
+```
+- 타입 매개변수 앞에 const 수식어를 추가하면 타입 매개변수 T를 추론할 때 as const를 붙인 값으로 추론됨
+
+### 제네릭에 제약 걸기
+
+- 타입 매개변수에 `extends` 문법으로 **제약(constaint)**을 사용할 수 있음
+
+- 상속을 의미하던 `extends`와 다름
+
+#### 제약과 기본값은 다름
+
+- 기본값으로 지정한 타입과 완전히 다른 타입을 제공할 수 있지만, 제약에 어긋나는 타임을 제공할 수 없음
+
+#### 하나의 타입 매개변수가 다른 타입 매개변수의 제약이 될 수도 있음
+
+```ts
+interface Example<A, B extends A> {
+  a: A,
+  b: B,
+}
+type Usecase1 = Example<string, number>;
+// Type 'number' does not satisfy the constraint 'string'.
+type Usecase2 = Example<string, 'hello'>;
+type Usecase3 = Example<number, 123>;
+```
+#### 자주 쓰이는 제약
+
+```ts
+<T extends object> // 모든 객체
+<T extends any[]> // 모든 배열
+<T extends (...args: any) => any> // 모든 함수
+<T extends abstract new (...args: any) => any> // 생성자 타입
+<T extends keyof any> // string | number | symbol
+```
+#### 제네릭에 제약을 사용할 떄 흔히 하는 실수
+
+- 타입 매개변수와 제약을 동일하게 생각하는 것
+
+```ts
+interface VO {
+  value: any;
+}
+
+const returnVO = <T extends VO>(): T => {
+  return { value: 'test' }; // error
+}
+```
+- 위 코드에서 `T`는 정확히 `V0`가 아니라 `V0`에 대입할 수 있는모든 타입을 의미함
+- 즉 `{ value: string, another: string }`도 `T`가 될 수 있음
+- 이러면 `{ value: string }`이 아니게 되고 에러가 발생함
+
+> 타입 매개변수와 제약을 동일하게 생각하면 안 되고 타입 매개변수가 제약에 대입할 수 있는 타입인지를 따져보아야 함
+
+---
+
+## 2.15 조건문과 비슷한 컨디셔널 타입이 있다
+
+
+### 컨디셔널 타입
+- 타입스크립트에는 조건에 따라 다른 타입이 되는 **컨디셔널 타입(Conditional Type)**이 있음
+
+```ts
+특정 타입 extends 다른 타입 ? 참일 때 타입 : 거짓일 때 타입
+```
+- 특정 타입을 다른 타입에 대입할 수 있을 때 즉, 특정 타입이 다른 타입의 부분집합일 때 참이 됨
+
+- 여기서 `extends`는 삼항연산자와 같이 사용됨
+```ts
+type A1 = string;
+type B1 = A1 extends string ? number : boolean;
+// type B1 = number
+
+type A2 = number;
+type B2 = A2 extends string ? number : boolean;
+// type B2 = boolean
+```
+#### 타입 검사에 사용
+
+```ts
+type Result = 'hi' extends string ? true : false;
+// type Result = true
+type Result2 = [1] extends [string] ? true : false;
+// type Result2 = false
+```
+- 위 코드로 `hi`와 `[1]`이 `string` 타입인지 아닌지 확인할 수 있음
+
+#### never와 함께 사용
+
+- 단순한 상황에서는 `never`와 함께 쓸 이유가 없음
+
+- 보통 제네릭과 더불어 쓸 떄만 `never`가 의미가 있음
+```ts
+type ChooseArray<A> = A extends string ? string[] : never;
+type StringArray = ChooseArray<string>;
+// type StringArray = string[]
+type Never = ChooseArray<number>;
+// type Never = never
+```
+- `never`는 모든 타입에 대입할 수 있어 모든 타입을 `extends` 할 수 있음
+
+#### 컨디셔널 타입을 자바스크립트의 삼항연산자처럼 중첩해 사용 가능
+
+```ts
+type ChooseArray<A> = A extends string
+  ? string[]
+  : A extends boolean ? boolean[] : never;
+type StringArray = ChooseArray<string>;
+// type StringArray = string[]
+type BooleanArray = ChooseArray<boolean>;
+// type BooleanArray = boolean[]
+type Never = ChooseArray<number>;
+// type Never = never
+```
+
+#### 인덱스 접근 타입으로 컨디셔널 타입 표현
+
+```ts
+type A1 = string;
+type B1 = A1 extends string ? number : boolean;
+type B2 = {
+  't': number;
+  'f': boolean;
+}[A1 extends string ? 't' : 'f'];
+```
+
+#### 컨디셔널 타입 분배 법칙
+
+- 검사하려는 타입이 제네릭이면서 유니언이면 분배법칙이 실행됨
+
+`Result<string | number>`는 `Reasult<string> | Result<number>`가 됨
+
+- `boolean`에 분배법칙이 적용되면 의도치 않은 일이 발생하기 때문에 배열로 제네릭을 감싸 분배법칙이 일어나지 않게 해야함
+
+- `never`가 유니언으로 보이지 않지만 유니언이라고 생각하는 게 좋음
+
+- 컨디셔널 타입에서 제네릭과 `never`가 만나면 `never`가 된다고 생각
+
+- 타입스크립트는 제네릭이 들어 있는 컨디셔널 타입을 판단할 때 값의 판단을 뒤로 미룸 → 배열로 제네릭을 감싸 미루지 못하게 함
+
+---
+
+## 2.16 함수와 메서드를 타이핑하자
+
+```ts
+function example(a: string, b?: number, c = false) {}
+// function example(a: string, b?: number, c?: boolean): void
+example('hi', 123, true);
+example('hi', 123);
+example('hi');
+```
+- 위 코드에서 `c`는 `false`가 기본값으로 들어있는데, 기본값이 제공된 매개변수는 자동으로 옵셔널이 됨
+
+### 매개변수에 ...(나머지) 문법 사용 가능
+
+```ts
+function example1(a: string, ...b: number[]) {}
+example1('hi', 123, 4, 56);
+function example2(...a: string[], b: number) {}
+// A rest parameter must be last in a parameter list.
+```
+- 나머지 매개변수 문법을 사용하는 매개변수는 항상 배열이나 튜플이어야 함
+
+- 나머지 매개변수 문법은 배열의 전개 문법과는 다르게 매개변수의 마지막 자리에만 위치해야 함
+
+```ts
+function example3(...args: [number, string, boolean]) {}
+// function example3(args_0: number, args_1: string, args_2: boolean): void
+example3(1, '2', false);
+
+function example4(...args: [a: number, b: string, c: boolean]) {}
+// function example4(a: number, b: string, c: boolean): void
+// 매개변수 이름을 직접 정하고 싶을 때 쓰는 방법
+```
+
+- 매개변수 자리에 전개 문법을 사용할 수 있음
+
+- 이때 각 매개변수의 이름은 임의로 정해짐
+
+### 함수 내부에서 this는 명시적으로 표기
+
+- `this`를 명시적으로 표기하지 않으면 `any`로 추론되고, 에러 발생
+
+```ts
+function example1() {
+  console.log(this);
+}
+// 'this' implicitly has type 'any' because it does not have a type annotation.
+
+function example2(this: Window) {
+  console.log(this);
+}
+// this: Window
+
+function example3(this: Document, a: string, b: 'this') {}
+example3('hello', 'this');
+// The 'this' context of type 'void' is not assignable to method's 'this' of type 'Document'.
+
+example3.call(document, 'hello', 'this');
+```
+- `this`의 타입을 매개변수 첫 번째 자리에 표기하면 됨
+
+- 다른 매개변수들은 뒤로 한 자리씩 밀려남
+
+- `example3` 처럼 `call`메서드를 이용해 `this`의 값을 명시적으로 지정해야 함 
+
+### 메서드에서 this를 사용할 수 있음
+
+- `this`가 메서드를 갖고 있는 객체 자신으로 추론되므로 this를 명시적으로 타이핑할 필요가 없음
+
+- 하지만 `this`가 바뀔 수 있을 때는 명시적으로 타이핑해야 함
+
+### class로 생성자 사용
+
+- 메서드 앞에 `new`를 붙여 만들 수 있지만 아직은 부자연스러운 방법이므로 이후 제대로 배울 예정
+
+---
+
+## 2.17 같은 이름의 함수를 여러 번 선언할 수 있다
+
+- 타입스크립트에서는 매개변수에 어떤 타입과 값이 들어올지 미리 타입 선언을 해야함
+
+### 오버로딩(overloading)
+
+- **오버로딩** : 호출할 수 있는 함수의 타입을 미리 여러 개 타이핑해두는 기법
+```ts
+function add(x: number, y: number): number
+function add(x: string, y: string): string
+function add(x: any, y: any) {
+  return x + y;
+}
+
+add(1, 2); // 3
+add('1', '2'); // 12
+add(1, '2'); // error
+add('1', 2); // error
+```
+- 위 코드에서 처음 두 선언은 타입만 있고 함수의 구현부(implementation)가 없음
+
+- 여러 오버로딩이 동시에 해당될 수 있는 경우는 제일 먼저 선언된 오버로딩에 해당됨
+
+- 오버로딩의 순서는 좁은 타입부터 넓은 타입순으로 오게 해야 함
+
+```ts
+interface Add {
+  (x: number, y: number): number;
+  (x: string, y: string): string;
+}
+const add: Add = (x: any, y: any) => x + y;
+
+add(1, 2); // 3
+add('1', '2'); // 12
+add(1, '2'); // error
+add('1', 2); // error
+```
+
+- 위 코드처럼 인터페이스로도 오버로딩을 표현할 수 있음
+
+- 각각의 함수 타입을 선언한 뒤 `&`연산자로 하나로 묶으면 오버로딩과 같은 역할을 함
+
+> 지나치게 오버로딩을 활용하면 안 됨
+유니언이나 옵셔널 매개변수를 쓰는 경우는 오버로딩을 쓰지 않는 게 좋음
+
+---
+
+## 2.18 콜백 함수의 매개변수는 생략 가능하다
+
+```ts
+function example(callback: (error: Error, result: string) => void) {}
+example((e, r) => {});
+example(() => {});
+example(() => true);
+```
+
+- 타입스크립트에서 인수로 제공하는 콜백 함수의 배개변수에는 타입을 표기하지 않아도 됨
+
+- **문맥적 추론(Contextual Typing)** : 함수를 선언할 때 콜백 함수에 타입을 선언해서 `callback` 매개변수의 타입이 추론되는 현상
+
+- 콜백 함수의 매개변수는 함수를 호출할 때 사용하지 않아도 됨
